@@ -1,0 +1,12 @@
+#Ignore everything
+*
+
+#Except
+!.gitignore
+!*.c
+!*.cpp
+!*.h
+!*.hpp
+
+#Include directory
+!*/
