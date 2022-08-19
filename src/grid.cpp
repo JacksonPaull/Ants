@@ -33,9 +33,9 @@ Grid::Grid(int x, int y, int width, int height, bool autogen) {
     this->indices = std::vector<unsigned int>();
 
     //Create Grid
-    this->grid = new float*[width+1];
+    this->grid = new int*[width+1];
     for(int i = 0; i < width+1; i++)
-        this->grid[i] = new float[height+1];
+        this->grid[i] = new int[height+1];
 
     //2. Generate vertex
     generateVertices();
@@ -88,9 +88,9 @@ void Grid::randomize() {
         for(int j=0; j < this->height+1; j++) {
             float rval = float(rand()) / float(RAND_MAX);
             if(rval < p)
-                this->grid[i][j] = 1.0;
+                this->grid[i][j] = 1;
             else
-                this->grid[i][j] = 0.0;
+                this->grid[i][j] = 0;
         }
     }
 }
@@ -98,9 +98,9 @@ void Grid::randomize() {
 void Grid::smooth() {
     //Create a copy of the grid to store everything in
     //Not changing the borders, so we dont need the width+1
-    float** newGrid = new float*[this->width];
+    int** newGrid = new int*[this->width];
     for(int i = 1; i < this->width; i++)
-        newGrid[i] = new float[this->height];
+        newGrid[i] = new int[this->height];
     
     for(int i = 1; i < this->width; i++) {
         for(int j = 1; j < this->height; j++) {
@@ -132,6 +132,10 @@ void Grid::smooth() {
     
 
     this->triangulate(); //TODO Remove this call if not visualizing step by step
+}
+
+void Grid::filterRegions() {
+
 }
 
 void Grid::triangulate() {

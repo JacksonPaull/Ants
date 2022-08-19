@@ -26,7 +26,7 @@ class Grid {
         int smoothness_level;               //Number of smoothing iterations
         float p;                            //Odds a cell is constructed as a wall
 
-        float** grid; //Datastructure to hold grid values
+        int** grid; //Datastructure to hold grid values
         std::vector<float> vertices;
         std::vector<Region> regions;
         std::vector<unsigned int> indices;  //Holds the indexes of the vertices to draw
@@ -37,6 +37,7 @@ class Grid {
         void lockBorders();                 //Lock the borders to be walls
         void triangulate();                 //Triangulate all nodes
 
+        void detectRegions();               //Uses BFS of nodes with same value as the node to create regions
         void filterRegions();
         void connectRegions();
 
