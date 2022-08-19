@@ -11,7 +11,14 @@
  * @param autogen Whether to autocomplete all steps or not
  */
 Grid::Grid(int x, int y, int width, int height, bool autogen) {
+    //0. Create Data
+
+    //TODO Add superset constructurs with default values for these
     this->seed = 5; //rand();
+    this->p = 0.45;
+    this->smoothness_level = 5;
+
+    createGLData();
     
     //1. Set constants
     this->x = x;
@@ -37,6 +44,9 @@ Grid::Grid(int x, int y, int width, int height, bool autogen) {
     randomize();
 
     //5. Smooth Grid
+    this->lockBorders();
+    for(int i = 0; i < this->smoothness_level; i++)
+        this->smooth();
 
     //6. Filter out small regions
 
@@ -46,7 +56,7 @@ Grid::Grid(int x, int y, int width, int height, bool autogen) {
     triangulate();
 
     //9. Save data on the GPU
-    createGLData();
+    
 }
 
 Grid::~Grid() {
@@ -59,20 +69,74 @@ Grid::~Grid() {
     deleteGLData();
 }
 
+void Grid::lockBorders() {
+    //Set all borders to be walls
+    for(int i = 0; i < this->height+1; i++) {
+        this->grid[0][i] = 1;
+        this->grid[this->width][i] = 1;
+    }
+    for(int i = 0; i < this->width+1; i++) {
+        this->grid[i][0] = 1;
+        this->grid[i][this->width] = 1;
+    }
+}
+
 void Grid::randomize() {
     srand(this->seed);
 
     for(int i=0; i < this->width+1; i++) {
         for(int j=0; j < this->height+1; j++) {
-            int val = rand()%2;
-
-            this->grid[i][j] = (float)val;
+            float rval = float(rand()) / float(RAND_MAX);
+            if(rval < p)
+                this->grid[i][j] = 1.0;
+            else
+                this->grid[i][j] = 0.0;
         }
     }
 }
 
+void Grid::smooth() {
+    //Create a copy of the grid to store everything in
+    //Not changing the borders, so we dont need the width+1
+    float** newGrid = new float*[this->width];
+    for(int i = 1; i < this->width; i++)
+        newGrid[i] = new float[this->height];
+    
+    for(int i = 1; i < this->width; i++) {
+        for(int j = 1; j < this->height; j++) {
+            
+            //Get neighbor values
+            int tot = 0;
+            for(int dx = -1; dx <= 1; dx++) {
+                for(int dy = -1; dy <= 1; dy++) {
+                    //Get count of different other cells around
+                    if(this->grid[i+dx][j+dy] != this->grid[i][j])
+                        tot++;
+                }
+            }
+
+            //Set self to be the avg of neighbors
+            newGrid[i][j] = this->grid[i][j];
+            if(tot > 5) 
+                newGrid[i][j] = 1.0 - this->grid[i][j];
+        }
+    }
+    
+    //Copy new grid back over to grid and delete new grid
+    for(int i = 1; i < this->width; i++) {
+        for(int j = 1; j < this->height; j++)
+            this->grid[i][j] = newGrid[i][j];
+        delete[] newGrid[i];
+    }
+    delete[] newGrid;
+    
+
+    this->triangulate(); //TODO Remove this call if not visualizing step by step
+}
+
 void Grid::triangulate() {
-    //TODO
+    //TODO finish this with an actual triangulation table
+    this->indices.clear();
 
     //Currently only 2 cases: wall or not
     for(int i =0; i < (this->width); i++) {
@@ -93,6 +157,7 @@ void Grid::triangulate() {
             }
         }
     }
+    updateGLData();
 }
 
 void Grid::draw() {
@@ -123,15 +188,8 @@ void Grid::createGLData() {
 }
 
 void Grid::updateGLData() {
+    //Bind to the already created VAO
     glBindVertexArray(this->VAO);
-    //Create Vertex Buffer Object to hold vertex positions
-    glDeleteBuffers(1, &this->VBO);
-    glGenBuffers(1, &this->VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-
-    glDeleteBuffers(1, &this->EBO);
-    glGenBuffers(GL_ELEMENT_ARRAY_BUFFER, &this->EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
 
     //Send data to the GPU
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(float), this->vertices.data(), GL_STATIC_DRAW);
@@ -151,6 +209,7 @@ void Grid::deleteGLData() {
     glDeleteBuffers(1, &this->EBO);
 
     glDeleteVertexArrays(1, &this->VAO);
+    glBindVertexArray(0);
 }
 
 void Grid::generateVertices() {
@@ -169,19 +228,7 @@ void Grid::generateVertices() {
     }
 }
 
-void Grid::test() {
-    std::cout << "Vertices: \n";
-    for(int i = 0; i < this->vertices.size(); i++) {
-        printf("%.2f ", this->vertices.data()[i]);
-    }
-    std::cout << std::endl;
-
-    std::cout << "Indices: \n";
-    for(int i = 0; i < this->indices.size(); i++) {
-        printf("%d ", this->indices.data()[i]);
-    }
-    std::cout << std::endl;
-    
+void Grid::printGrid() {
     for(int i = 0; i < this->width+1; i++) {
         for(int j = 0; j < this->height +1; j++) {
             printf("%.2f ", this->grid[i][j]);

@@ -1,9 +1,5 @@
 #pragma once
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <stb_image.h>
-#include <vector>
-#include <iostream>
+#include "core.hpp"
 #include <queue>
 
 #define CELL_HEIGHT 10
@@ -27,6 +23,8 @@ class Grid {
         int width;
         int height;
         int current_step;                   //Current step for autogen purposes
+        int smoothness_level;               //Number of smoothing iterations
+        float p;                            //Odds a cell is constructed as a wall
 
         float** grid; //Datastructure to hold grid values
         std::vector<float> vertices;
@@ -36,7 +34,7 @@ class Grid {
 
         void generateVertices();
 
-        void smooth();                      //Use 4-5 Cellular Automata
+        void lockBorders();                 //Lock the borders to be walls
         void triangulate();                 //Triangulate all nodes
 
         void filterRegions();
@@ -56,5 +54,7 @@ class Grid {
         void randomize();
         void nextStep();
 
-        void test();
+        void smooth();                      //Use 4-5 Cellular Automata
+
+        void printGrid();
 };
