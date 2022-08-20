@@ -42,6 +42,39 @@ class InputManager {
 
 
 /*
+    Class to handle logging
+        Channels
+            - Info
+            - cout
+            - err
+        
+        Message contains:
+            - <message>
+            - timestamp
+
+        Can define output stream
+            - File
+            - cout
+            - std::err
+            - etc
+
+        Automatic indenting
+            - Indentation level tracked, increased and decreased when printing things
+
+        logger.indent()
+        logger.log(message, channel)
+        logger.std(message)
+        logger.err(message)
+        etc
+        logger.outdent()
+
+*/
+class Logger {
+
+};
+
+
+/*
     Class to handle most basic opengl/glfw functionality
     //TODO Likely want to expand this in the future to wrap other objects in this file as well
 

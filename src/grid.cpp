@@ -49,6 +49,7 @@ Grid::Grid(int x, int y, int width, int height, bool autogen) {
         this->smooth();
 
     //6. Filter out small regions
+    
 
     //7. Connect regions
 
@@ -134,8 +135,104 @@ void Grid::smooth() {
     this->triangulate(); //TODO Remove this call if not visualizing step by step
 }
 
-void Grid::filterRegions() {
+Region Grid::detectRegion(int startX, int startY, bool** checked, int id) {
+    Region r = Region(id, this->grid[startX][startY] == 1);
+    
+    //Flood fill / BFS
+    std::vector<coord> open = std::vector<coord>();
+    open.push_back(coord(startX, startY));
+    while(open.size() > 0) {
+        //Take last element
+        coord c = open.back();
+        open.pop_back();
 
+        if(checked[c.x][c.y]) //If this element is already checked, dont bother doing it again
+            continue;
+
+        r.cells.push_back(c);
+        checked[c.x][c.y] = true;
+        bool border = false;
+
+        for(int dx = -1; dx <= 1; dx++) {
+            for(int dy = -1; dy <= 1; dy++) {
+                if(!inBounds(c.x+dx, c.y+dy) || (dx==0 && dy==0))
+                    continue;
+
+                if(this->grid[c.x][c.y]==this->grid[c.x+dx][c.y+dy])
+                    open.push_back(coord(c.x+dx, c.y+dy));
+                else
+                    border = true;
+            }
+        }
+        if(border)
+            r.borderCells.push_back(c);    
+    }
+
+    //std::cout << "Detected region " << r.id << " with size: " << r.cells.size() << std::endl;
+    return r;
+}
+
+std::vector<Region> Grid::detectAllRegions() {
+    std::vector<Region> regions = std::vector<Region>();
+    
+    //Create array of checked
+    bool** checked = new bool*[this->width+1];
+    for(int i = 0; i < this->width+1; i++) {
+        checked[i] = new bool[this->height+1];
+        for(int j = 0; j < this->height+1; j++) {
+            checked[i][j] = false;
+        }
+    }
+
+    //TODO Replace this with a slightly smarter version if it works
+    int id = 0;
+    for(int i = 0; i < this->width+1; i++) {
+        for(int j = 0; j < this->height+1; j++) {
+            if(!checked[i][j]) {
+                Region r = detectRegion(i, j, checked, id++);
+                regions.push_back(r);
+            }
+        }
+    }
+
+    //Delete checked arrray
+    for(int i = 0; i < this->width+1; i++) {
+        delete[] checked[i];
+    }
+    delete[] checked;
+    
+    return regions;
+}
+
+void Grid::filterRegions(int threshold) {
+    //Detect Regions
+    //std::cout << "First Pass:\n";
+    this->regions = detectAllRegions();
+
+    std::cout << std::endl;
+
+    //Filter by threshold
+    for(int i = 0; i < this->regions.size(); i++) {
+        Region r = this->regions.at(i);
+        if(r.cells.size() < threshold) {
+            //std::cout << "Inverting Region " << r.id << " with size " << r.cells.size() << std::endl;
+            //Swap all cell values to remove region
+            for(int j = 0; j < r.cells.size(); j++) {
+                coord c = r.cells.at(j);
+                this->grid[c.x][c.y] = 1 - this->grid[c.x][c.y];
+            }
+        }
+    }
+
+    //Detect regions again
+    //std::cout << "\nSecond pass: \n";
+    this->regions = detectAllRegions();
+}
+
+bool Grid::inBounds(int x, int y) {
+    if(x < 0 || (x > this->width) || (y < 0) || (y > this->height))
+        return false;
+    return true;
 }
 
 void Grid::triangulate() {
@@ -240,3 +337,16 @@ void Grid::printGrid() {
         std::cout << std::endl;
     }
 }
+
+/*
+    TODO
+        - Grid of node structs rather than ints?
+            - int/float val
+            - bool isWall
+
+        - Template function for creating a grid  (int bool whatever)
+            - Function for deleting temp grid
+
+        - Overload equals for nodes and such
+
+*/

@@ -98,11 +98,20 @@ int main()
 
     // render loop
     // -----------
+    bool x = false;
     while (!glfwWindowShouldClose(window))
     {
         // input
         // -----
         processInput(window);
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && x == false) {
+            x == true;
+            g->filterRegions(100);
+            g->triangulate();
+        }
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+            x == false;
+        }
         
         // render
         // ------

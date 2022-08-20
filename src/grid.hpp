@@ -6,13 +6,32 @@
 
 struct coord {
     int x, y;
+    coord() {
+        this->x = 0;
+        this->y = 0;
+    }
+
+    coord(int x, int y) {
+        this->x = x;
+        this->y = y;
+    }
 };
 
 struct Region {
     int id;
     std::vector<coord> cells;
+    std::vector<coord> borderCells;
     std::vector<int> connectedRegions;
     bool isWall;
+
+    Region(int id, bool isWall) {
+        this->id = id;
+        this->isWall = isWall;
+
+        this->cells = std::vector<coord>();
+        this->connectedRegions = std::vector<int>();
+        this->borderCells = std::vector<coord>();
+    }
 };
 
 
@@ -35,20 +54,25 @@ class Grid {
         void generateVertices();
 
         void lockBorders();                 //Lock the borders to be walls
-        void triangulate();                 //Triangulate all nodes
 
-        void detectRegions();               //Uses BFS of nodes with same value as the node to create regions
-        void filterRegions();
-        void connectRegions();
+        
 
         void createGLData();
         void updateGLData();
         void deleteGLData();
 
+        bool inBounds(int x, int y);
+
     public:
         Grid(int x, int y, int width, int height, bool autogen);
         Grid(int width, int height, bool autogen);
         ~Grid();
+
+        void triangulate();                 //Triangulate all nodes
+        std::vector<Region> detectAllRegions();               //Uses BFS of nodes with same value as the node to create regions
+        Region detectRegion(int startX, int startY, bool** checked, int id);
+        void filterRegions(int threshold);
+        void connectRegions();
 
         void setSeed();
         void draw();
