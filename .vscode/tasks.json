@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "Build OpenGL Project",
+            "label": "Build OpenGL Project Surface",
             "command": "C:\\MinGW\\bin\\g++.exe",
             "args": [
                 "-g",
@@ -11,9 +11,32 @@
                 "-L./lib",
                 "src/\\*.cpp",
                 "src/glad.c",
+                "-lglfw3dll32",
+                "-o",
+                "${workspaceFolder}/ants.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "Build OpenGL Project Desktop",
+            "command": "C:\\MinGW\\bin\\g++.exe",
+            "args": [
+                "-g",
+                "-std=c++17",
+                "-I ${workspaceFolder}/include",
+                "-L ${workspaceFolder}/lib",
+                "src/*.cpp",
+                "src/glad.c",
                 "-lglfw3dll",
                 "-o",
-                "${workspaceFolder}/test.exe"
+                "${workspaceFolder}/ants.exe"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

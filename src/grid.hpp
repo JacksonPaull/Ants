@@ -64,7 +64,7 @@ class Grid {
         bool inBounds(int x, int y);
 
     public:
-        Grid(int x, int y, int width, int height, bool autogen);
+        Grid(int x, int y, int width, int height, bool autogen, int seed);
         Grid(int width, int height, bool autogen);
         ~Grid();
 
@@ -74,7 +74,7 @@ class Grid {
         void filterRegions(int threshold);
         void connectRegions();
 
-        void setSeed();
+        void setSeed(int seed);
         void draw();
         void randomize();
         void nextStep();

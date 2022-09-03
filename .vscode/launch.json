@@ -8,9 +8,9 @@
             "type":"cppdbg",
             "name":"Launch",
             "cwd":"${workspaceRoot}",
-            "program": "${workspaceRoot}/test.exe",
+            "program": "${workspaceRoot}/ants.exe",
             "request": "launch",
-            "preLaunchTask": "Build OpenGL Project"
+            "preLaunchTask": "Build OpenGL Project Desktop"
         }
     ]
 }

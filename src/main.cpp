@@ -94,7 +94,7 @@ int main()
 
     //------------------
 
-    Grid* g = new Grid(0, 0, 100, 100, true);
+    Grid* g = new Grid(0, 0, 100, 100, true, 5);
 
     // render loop
     // -----------
@@ -104,14 +104,16 @@ int main()
         // input
         // -----
         processInput(window);
-        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && x == false) {
-            x == true;
-            g->filterRegions(100);
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !x) {
+            g->filterRegions(10);
             g->triangulate();
+            x = true;
         }
-        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
-            x == false;
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE && x) {
+            x = false;
         }
+
+        
         
         // render
         // ------
@@ -125,6 +127,8 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    delete g;
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

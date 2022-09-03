@@ -10,11 +10,11 @@
  * @param height Grid height in cells
  * @param autogen Whether to autocomplete all steps or not
  */
-Grid::Grid(int x, int y, int width, int height, bool autogen) {
+Grid::Grid(int x, int y, int width, int height, bool autogen, int seed) {
     //0. Create Data
 
     //TODO Add superset constructurs with default values for these
-    this->seed = 5; //rand();
+    this->seed = seed;
     this->p = 0.45;
     this->smoothness_level = 5;
 
@@ -49,16 +49,14 @@ Grid::Grid(int x, int y, int width, int height, bool autogen) {
         this->smooth();
 
     //6. Filter out small regions
-    
+    //filterRegions(100);
 
     //7. Connect regions
 
     //8. Triangulate
-    triangulate();
-
-    //9. Save data on the GPU
-    
+    triangulate();    
 }
+
 
 Grid::~Grid() {
     //Delete Grid
@@ -130,9 +128,6 @@ void Grid::smooth() {
         delete[] newGrid[i];
     }
     delete[] newGrid;
-    
-
-    this->triangulate(); //TODO Remove this call if not visualizing step by step
 }
 
 Region Grid::detectRegion(int startX, int startY, bool** checked, int id) {
@@ -154,15 +149,20 @@ Region Grid::detectRegion(int startX, int startY, bool** checked, int id) {
         bool border = false;
 
         for(int dx = -1; dx <= 1; dx++) {
-            for(int dy = -1; dy <= 1; dy++) {
-                if(!inBounds(c.x+dx, c.y+dy) || (dx==0 && dy==0))
-                    continue;
-
-                if(this->grid[c.x][c.y]==this->grid[c.x+dx][c.y+dy])
-                    open.push_back(coord(c.x+dx, c.y+dy));
-                else
-                    border = true;
-            }
+            if(!inBounds(c.x+dx, c.y) || dx==0)
+                continue;
+            if(this->grid[c.x][c.y]==this->grid[c.x+dx][c.y])
+                open.push_back(coord(c.x+dx, c.y));
+            else
+                border = true;
+        }
+        for(int dy = -1; dy <= 1; dy++) {
+            if(!inBounds(c.x, c.y+dy) || dy==0)
+                continue;
+            if(this->grid[c.x][c.y]==this->grid[c.x][c.y+dy])
+                open.push_back(coord(c.x, c.y+dy));
+            else
+                border = true;
         }
         if(border)
             r.borderCells.push_back(c);    
@@ -184,7 +184,6 @@ std::vector<Region> Grid::detectAllRegions() {
         }
     }
 
-    //TODO Replace this with a slightly smarter version if it works
     int id = 0;
     for(int i = 0; i < this->width+1; i++) {
         for(int j = 0; j < this->height+1; j++) {
@@ -204,18 +203,23 @@ std::vector<Region> Grid::detectAllRegions() {
     return regions;
 }
 
+
+//Note: bad behavior when a filterable region completely surrounds another, smaller also filterable region
+//Tempfix: Cull small regions, possibly run multiple times
+/* Perma fix idea:
+    Assign each cell a region value and update it as the process continues,
+    If all of the border cells for a region 
+
+*/
 void Grid::filterRegions(int threshold) {
     //Detect Regions
     //std::cout << "First Pass:\n";
     this->regions = detectAllRegions();
 
-    std::cout << std::endl;
-
     //Filter by threshold
     for(int i = 0; i < this->regions.size(); i++) {
         Region r = this->regions.at(i);
         if(r.cells.size() < threshold) {
-            //std::cout << "Inverting Region " << r.id << " with size " << r.cells.size() << std::endl;
             //Swap all cell values to remove region
             for(int j = 0; j < r.cells.size(); j++) {
                 coord c = r.cells.at(j);
@@ -225,7 +229,6 @@ void Grid::filterRegions(int threshold) {
     }
 
     //Detect regions again
-    //std::cout << "\nSecond pass: \n";
     this->regions = detectAllRegions();
 }
 
@@ -240,21 +243,158 @@ void Grid::triangulate() {
     this->indices.clear();
 
     //Currently only 2 cases: wall or not
-    for(int i =0; i < (this->width); i++) {
-        for(int j =0; j < (this->height); j++) {
-            if(grid[i][j]==1.0) {
-                unsigned int tl = i + j*(this->width+1);
-                unsigned int tr = tl+1;
-                unsigned int bl = tl + (this->width+1);
-                unsigned int br = bl+1;
+    for(int i = 0; i < (this->width); i++) {
+        for(int j = 0; j < (this->height); j++) {
+            unsigned int tl = i * 2 + j * 2 * (this->width * 2 + 1);
+            unsigned int tm = tl + 1;
+            unsigned int tr = tl + 2;
+            unsigned int lm = tl + (this->width * 2 + 1);
+            unsigned int rm = tr + (this->width * 2 + 1);
+            unsigned int bl = lm + (this->width * 2 + 1);
+            unsigned int bm = bl + 1;
+            unsigned int br = bl + 2;
+            
+            int8_t neighbors = (grid[i][j] << 3) + (grid[i+1][j] << 2) + (grid[i][j+1] << 1) + grid[i+1][j+1];
 
-                this->indices.push_back(tl);
-                this->indices.push_back(tr);
-                this->indices.push_back(bl);
-
-                this->indices.push_back(tr);
-                this->indices.push_back(bl);
-                this->indices.push_back(br);
+            switch(neighbors) {
+                case 0b0000:
+                    //Empty Square
+                    break;
+                case 0b0001:
+                    this->indices.push_back(br);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(rm);
+                    break;
+                case 0b0010:
+                    this->indices.push_back(bl);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(lm);
+                    break;
+                case 0b0011:
+                    this->indices.push_back(lm);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(br);
+                    this->indices.push_back(br);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(rm);
+                    break;
+                case 0b0100:
+                    this->indices.push_back(tr);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(tm);
+                    break;
+                case 0b0101:
+                    this->indices.push_back(tm);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(br);
+                    this->indices.push_back(br);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(tr);
+                    break;
+                case 0b0110:
+                    this->indices.push_back(bl);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(tm);
+                    break;
+                case 0b0111:
+                    this->indices.push_back(tr);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(br);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(br);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(br);
+                    break;
+                case 0b1000:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(lm);
+                    break;
+                case 0b1001:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(br);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(bm);
+                    break;
+                case 0b1010:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(bm);
+                    break;
+                case 0b1011:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(tm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(br);
+                    break;
+                case 0b1100:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(rm);
+                    break;
+                case 0b1101:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(lm);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(br);
+                    break;
+                case 0b1110:
+                    this->indices.push_back(tl);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(tl);
+                    this->indices.push_back(bm);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(tl);
+                    this->indices.push_back(rm);
+                    this->indices.push_back(tr);
+                    break;
+                case 0b1111:
+                    //Full Square
+                    this->indices.push_back(tl);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(bl);
+                    this->indices.push_back(tr);
+                    this->indices.push_back(br);
+                    break;
+                default:
+                    std::cout << "Unkown triangulation case " << neighbors << std::endl;
             }
         }
     }
@@ -314,11 +454,14 @@ void Grid::deleteGLData() {
 }
 
 void Grid::generateVertices() {
-    for(int i = 0; i < (this->width+1); i++) {
-        for(int j = 0; j < (this->height+1); j++) {
+    //TODO Update middle vertices to be interpolated rather than fixed halfway
+    
+    
+    for(int j = 0; j <= (this->height * 2); j++) {
+        for(int i = 0; i <= (this->width * 2); i++) {
             //Transform coords to range (-1.0, 1.0)
-            float xpos = (((float)i)/((float)this->width) - 0.5)*2; 
-            float ypos = (((float)j)/((float)this->height) - 0.5)*-2; //Want pos y to be at the top
+            float xpos = (((float)i)/((float)this->width  * 2) - 0.5) * 2; 
+            float ypos = (((float)j)/((float)this->height * 2) - 0.5) *-2; //Want pos y to be at the top
             float zpos = 0.0;
 
             //Fill in info in vertices array
@@ -348,5 +491,7 @@ void Grid::printGrid() {
             - Function for deleting temp grid
 
         - Overload equals for nodes and such
+
+        - Documentation for all functions
 
 */
