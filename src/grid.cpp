@@ -9,6 +9,7 @@
  * @param width Grid width in cells
  * @param height Grid height in cells
  * @param autogen Whether to autocomplete all steps or not
+ * @param seed Seed to initialize the grid with
  */
 Grid::Grid(int x, int y, int width, int height, bool autogen, int seed) {
     //0. Create Data
