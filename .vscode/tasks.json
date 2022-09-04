@@ -26,12 +26,12 @@
         {
             "type": "shell",
             "label": "Build OpenGL Project Desktop",
-            "command": "C:\\MinGW\\bin\\g++.exe",
+            "command": "g++",
             "args": [
                 "-g",
                 "-std=c++17",
-                "-I ${workspaceFolder}/include",
-                "-L ${workspaceFolder}/lib",
+                "-I./include",
+                "-L./lib",
                 "src/*.cpp",
                 "src/glad.c",
                 "-lglfw3dll",

@@ -46,5 +46,15 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "cSpell.words": [
+        "autogen",
+        "Framebuffer",
+        "fsource",
+        "GLFW",
+        "OPENGL",
+        "Programiv",
+        "Shaderiv",
+        "vsource"
+    ]
 }
