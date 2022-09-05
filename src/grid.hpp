@@ -35,7 +35,7 @@ struct Region {
 };
 
 
-class Grid {
+class Grid : public EngineObject {
     private:
         int x, y;                           //Screen space coords
         int seed;
@@ -45,7 +45,7 @@ class Grid {
         int smoothness_level;               //Number of smoothing iterations
         float p;                            //Odds a cell is constructed as a wall
 
-        int** grid; //Datastructure to hold grid values
+        int** grid; //Data structure to hold grid values
         std::vector<float> vertices;
         std::vector<Region> regions;
         std::vector<unsigned int> indices;  //Holds the indexes of the vertices to draw

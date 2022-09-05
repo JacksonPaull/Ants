@@ -6,11 +6,19 @@
     "configurations": [
         {
             "type":"cppdbg",
-            "name":"Launch",
+            "name":"Compile Run Debug",
             "cwd":"${workspaceRoot}",
             "program": "${workspaceRoot}/ants.exe",
             "request": "launch",
             "preLaunchTask": "Build OpenGL Project Desktop"
+        },
+
+        {
+            "type":"cppdbg",
+            "name":"Run Debug",
+            "cwd":"${workspaceRoot}",
+            "program": "${workspaceRoot}/ants.exe",
+            "request": "launch"
         }
     ]
 }

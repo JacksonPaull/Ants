@@ -8,7 +8,7 @@
 #include <fstream>
 #include <string>
 #include <map>
-
+#include <vector>
 
 
 /*
@@ -37,6 +37,7 @@ class ResourceManager{
         //Sound loader
     public:
         ResourceManager();
+        bool shaderExists(string name);
         bool loadShader(string name, string path);
         bool loadShader(string name, string vpath, string fpath);
         void activateShader(string name);
@@ -65,7 +66,34 @@ class ResourceManager{
         assign that device with a key pressed
 */
 class InputManager {
+    public:
+        class Device {
+            public:
+                string name;
+                std::vector<bool> key;
+                std::vector<bool> key_prev;
+            
+                Device();
+        };
 
+        Device keyboard;
+        Device mouse;
+        std::vector<Device> gamepads;
+
+        InputManager();
+
+        void detectGamepads();
+        void update();
+
+        bool keyboard_key_up(int key);
+        bool keyboard_key_down(int key);
+        bool keyboard_key_pressed(int key);
+        bool keyboard_key_released(int key);
+
+        bool mouse_button_up(int key);
+        bool mouse_button_down(int key);
+        bool mouse_button_pressed(int key);
+        bool mouse_button_released(int key);
 };
 
 
@@ -102,31 +130,47 @@ class Logger {
 };
 
 
-/*
-    Class to handle most basic opengl/glfw functionality
-    TODO Likely want to expand this in the future to wrap other objects in this file as well
 
-*/
-class Engine {
-    //private:
-        //Collection of objects in the engine
-    GLFWwindow* window;
-
-
-    void initGLFW();
-    void createWindow(int width, int height);
-
-
-public:
-    InputManager input_manager;
-    ResourceManager resource_manager;
+class EngineObject {
+    private:
     
-    Engine();
-    ~Engine();
+    public:
+        virtual void processInput() {
 
-    GLFWwindow* getWindow();
+        }
 
-    //void processInput();
-    void renderWindow();
-
+        virtual void draw() {
+            std::cout << "Using Base Draw Method" << std::endl;
+        }
 };
+
+
+class Engine {
+    private:
+            //Collection of objects in the engine
+        GLFWwindow* window;
+
+
+        void initGLFW();
+        void createWindow(int width, int height);
+
+        std::vector<EngineObject*> objects;
+
+    public:
+        InputManager input_manager;
+        ResourceManager resource_manager;
+        bool running;
+        
+        Engine();
+        ~Engine();
+
+        GLFWwindow* getWindow();
+
+        void processInput();
+        void update();
+        void renderWindow();
+        void addObject(EngineObject* obj);
+};
+
+//GLOBAL ENGINE VARIABLE
+extern Engine* engine;

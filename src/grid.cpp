@@ -13,7 +13,6 @@
  */
 Grid::Grid(int x, int y, int width, int height, bool autogen, int seed) {
     //0. Create Data
-
     //TODO Add superset constructurs with default values for these
     this->seed = seed;
     this->p = 0.45;
@@ -195,7 +194,7 @@ std::vector<Region> Grid::detectAllRegions() {
         }
     }
 
-    //Delete checked arrray
+    //Delete checked array
     for(int i = 0; i < this->width+1; i++) {
         delete[] checked[i];
     }
@@ -416,7 +415,7 @@ void Grid::createGLData() {
     glGenBuffers(1, &this->VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(float), this->vertices.data(), GL_STATIC_DRAW);
-	//Tell the GPU how to interperet the data
+	//Tell the GPU how to interpret the data
     
 
     glGenBuffers(1, &this->EBO);
@@ -437,7 +436,7 @@ void Grid::updateGLData() {
 	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(float), this->vertices.data(), GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(unsigned int), this->indices.data(), GL_STATIC_DRAW);
 	
-    //Tell the GPU how to interperet the data
+    //Tell the GPU how to interpret the data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); 
 

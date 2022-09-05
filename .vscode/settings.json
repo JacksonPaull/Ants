@@ -44,17 +44,26 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "map": "cpp"
     },
     "cmake.configureOnOpen": false,
     "cSpell.words": [
         "autogen",
+        "Dloadproc",
         "Framebuffer",
         "fsource",
+        "GAMEPAD",
+        "gamepads",
         "GLFW",
         "OPENGL",
         "Programiv",
         "Shaderiv",
-        "vsource"
+        "vsource",
+        "Wcursorposfun",
+        "Wkeyfun",
+        "xpos",
+        "ypos",
+        "zpos"
     ]
 }
