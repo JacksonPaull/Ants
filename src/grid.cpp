@@ -13,7 +13,7 @@
  */
 Grid::Grid(int x, int y, int width, int height, bool autogen, int seed) {
     //0. Create Data
-    //TODO Add superset constructurs with default values for these
+    //TODO Add superset constructors with default values for these
     this->seed = seed;
     this->p = 0.45;
     this->smoothness_level = 5;
